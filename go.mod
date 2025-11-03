@@ -1,4 +1,4 @@
-module echo
+module github.com/OscarMitchell/echo
 
 go 1.23
 
