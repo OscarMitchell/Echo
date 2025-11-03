@@ -1,0 +1,6 @@
+$client = New-Object System.Net.Sockets.TcpClient("localhost", 23)
+$stream = $client.GetStream()
+$writer = New-Object System.IO.StreamWriter($stream)
+$writer.writeLine("Hello from not you")
+$writer.flush()
+$client.Close()
