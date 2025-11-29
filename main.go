@@ -15,7 +15,7 @@ import (
 var assets embed.FS
 
 func main() {
-	// Create an instance of the app structure
+	// Make all needed resources
 	serverHandler := server.NewServerHandler()
 
 	// Create application with options

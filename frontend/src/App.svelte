@@ -3,7 +3,7 @@
   import { EventsOn } from "../wailsjs/runtime/runtime"
   import {SetPort, StartServer, StopServer} from "../wailsjs/go/server/ServerHandler.js";
 
-  let port: number = -1;
+  let port: number = null;
   let rxMessages: string[] = [];
   let consoleDiv: HTMLDivElement;
 
@@ -50,7 +50,7 @@
 
 <main>
   <div class="input-box" id="input">
-    <input autocomplete="off" bind:value={port} class="input" id="port" type="number" placeholder="port" min=0/>
+    <input autocomplete="off" bind:value={port} class="input" id="port" type="number" placeholder="choose port number..." min=0/>
     <button class="btn" on:click={setPort}>Set</button>
   </div>
   <div class="start-stop" id="start-stop">
