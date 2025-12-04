@@ -11,6 +11,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/OscarMitchell/echo/backend/src/lib"
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 )
 
@@ -22,7 +23,7 @@ const (
 type Server struct {
 	ctx            context.Context
 	server         net.Listener
-	connections    map[net.Conn]bool
+	connections    *lib.Set[net.Conn]
 	connectionsMtx sync.Mutex
 }
 
@@ -34,7 +35,7 @@ func NewServer(ctx context.Context, port string) (*Server, error) {
 	return &Server{
 		ctx:         ctx,
 		server:      server,
-		connections: make(map[net.Conn]bool),
+		connections: lib.NewSet[net.Conn](),
 	}, nil
 }
 
@@ -66,7 +67,7 @@ func (s *Server) Run() {
 func (s *Server) Shutdown() {
 	log.Println("Shutdown triggered, closing connections and server")
 	s.connectionsMtx.Lock()
-	for conn := range s.connections {
+	for conn := range s.connections.All() {
 		_ = conn.Close()
 	}
 	s.connectionsMtx.Unlock()
@@ -79,7 +80,7 @@ func (s *Server) handleIncomingConnection(conn net.Conn) {
 	runtime.EventsEmit(s.ctx, "message-rx", newConnMsg)
 
 	s.connectionsMtx.Lock()
-	s.connections[conn] = true
+	s.connections.Add(conn)
 	s.connectionsMtx.Unlock()
 
 	buffer := bufio.NewReader(conn)
@@ -106,6 +107,6 @@ func (s *Server) handleDisconnect(conn net.Conn) {
 	log.Printf("Connection closed by client: %s", conn.RemoteAddr().String())
 	s.connectionsMtx.Lock()
 	_ = conn.Close()
-	delete(s.connections, conn)
+	s.connections.Remove(conn)
 	s.connectionsMtx.Unlock()
 }
