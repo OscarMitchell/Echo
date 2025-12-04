@@ -4,7 +4,7 @@ import (
 	"context"
 	"embed"
 
-	"github.com/OscarMitchell/echo/src/server"
+	"github.com/OscarMitchell/echo/backend/src/server"
 	"github.com/wailsapp/wails/v2"
 	"github.com/wailsapp/wails/v2/pkg/options"
 	"github.com/wailsapp/wails/v2/pkg/options/assetserver"
