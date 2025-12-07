@@ -18,7 +18,7 @@ type ConsoleMessage struct {
 func newConsoleMessage(msg string, sender string) *ConsoleMessage {
 	return &ConsoleMessage{
 		Content: msg,
-		RxTime:  time.Now().Format("15:04:05.9999"),
+		RxTime:  time.Now().Format("15:04:05.000"),
 		Size:    len(msg),
 		Sender:  sender,
 	}
