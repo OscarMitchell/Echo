@@ -11,6 +11,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/OscarMitchell/echo/backend/src/bridge"
 	"github.com/OscarMitchell/echo/backend/src/lib"
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 )
@@ -77,7 +78,7 @@ func (s *Server) Shutdown() {
 func (s *Server) handleIncomingConnection(conn net.Conn) {
 	newConnMsg := fmt.Sprintln("New connection from:", conn.RemoteAddr().String())
 	runtime.LogInfo(s.ctx, newConnMsg)
-	runtime.EventsEmit(s.ctx, "message-rx", newConnMsg)
+	// bridge.WriteToTcpConsole(s.ctx, newConnMsg) // TODO: Convert to alert when implemented
 
 	s.connectionsMtx.Lock()
 	s.connections.Add(conn)
@@ -85,7 +86,7 @@ func (s *Server) handleIncomingConnection(conn net.Conn) {
 
 	buffer := bufio.NewReader(conn)
 	for {
-		str, err := buffer.ReadString('\n')
+		msg, err := buffer.ReadString('\n')
 		if errors.Is(err, io.EOF) {
 			s.handleDisconnect(conn)
 			break
@@ -97,14 +98,12 @@ func (s *Server) handleIncomingConnection(conn net.Conn) {
 		if err != nil {
 			log.Printf("!!!!! Failed to read from the socket: %v", err)
 		}
-		msg := fmt.Sprintf("%s > %s", conn.RemoteAddr().String(), str)
-		runtime.EventsEmit(s.ctx, "message-rx", msg)
-		runtime.LogInfo(s.ctx, msg)
+		bridge.WriteToTcpConsole(s.ctx, msg, conn.RemoteAddr().String())
 	}
 }
 
 func (s *Server) handleDisconnect(conn net.Conn) {
-	log.Printf("Connection closed by client: %s", conn.RemoteAddr().String())
+	runtime.LogInfof(s.ctx, "Connection closed by client: %s", conn.RemoteAddr().String())
 	s.connectionsMtx.Lock()
 	_ = conn.Close()
 	s.connections.Remove(conn)
