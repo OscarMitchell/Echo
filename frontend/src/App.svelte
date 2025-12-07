@@ -1,10 +1,16 @@
 <script lang="ts">
-  import { onMount } from "svelte";
-  import { EventsOn } from "../wailsjs/runtime/runtime"
-  import {SetPort, StartServer, StopServer} from "../wailsjs/go/server/ServerHandler.js";
+  import { onDestroy, onMount } from "svelte";
+  import { EventsOff, EventsOn } from "../wailsjs/runtime/runtime";
+  import {
+    SetPort,
+    StartServer,
+    StopServer,
+  } from "../wailsjs/go/server/ServerHandler.js";
+  import Message from "./components/Message.svelte";
+  import type { Message as MessageType } from "./types";
 
   let port: number = null;
-  let rxMessages: string[] = [];
+  let messages: MessageType[] = [];
   let consoleDiv: HTMLDivElement;
 
   async function setPort(): Promise<void> {
@@ -13,7 +19,7 @@
         document.getElementById("start-btn").removeAttribute("disabled");
       })
       .catch((error) => {
-        rxMessages = [...rxMessages, error];
+        messages = [...messages, error];
       });
   }
 
@@ -21,24 +27,25 @@
     await StartServer()
       .then(() => {
         document.getElementById("stop-btn").removeAttribute("disabled");
-        document.getElementById("start-btn").setAttribute("disabled", "disabled");
+        document
+          .getElementById("start-btn")
+          .setAttribute("disabled", "disabled");
       })
       .catch((error) => {
-        rxMessages = [...rxMessages, error];
+        messages = [...messages, error];
       });
   }
 
   async function stopServer(): Promise<void> {
-    await StopServer()
-      .then(() => {
-        document.getElementById("start-btn").removeAttribute("disabled");
-        document.getElementById("stop-btn").setAttribute("disabled", "disabled");
-      })
+    await StopServer().then(() => {
+      document.getElementById("start-btn").removeAttribute("disabled");
+      document.getElementById("stop-btn").setAttribute("disabled", "disabled");
+    });
   }
 
   onMount(() => {
-    EventsOn("message-rx", (message: string) => {
-      rxMessages = [...rxMessages, message];
+    EventsOn("console-message", (message: MessageType) => {
+      messages = [...messages, message];
       setTimeout(() => {
         if (consoleDiv) {
           consoleDiv.scrollTop = consoleDiv.scrollHeight;
@@ -46,27 +53,41 @@
       }, 0);
     });
   });
+
+  onDestroy(() => {
+    EventsOff("console-message");
+  });
 </script>
 
 <main>
   <div class="input-box" id="input">
-    <input autocomplete="off" bind:value={port} class="input" id="port" type="number" placeholder="choose port number..." min=0/>
+    <input
+      autocomplete="off"
+      bind:value={port}
+      class="input"
+      id="port"
+      type="number"
+      placeholder="choose port number..."
+      min="0"
+    />
     <button class="btn" on:click={setPort}>Set</button>
   </div>
   <div class="start-stop" id="start-stop">
-    <button class="start-btn" id="start-btn" disabled on:click={startServer}>Start Server</button>
-    <button class="stop-btn" id="stop-btn" disabled on:click={stopServer}>Stop Server</button>
+    <button class="start-btn" id="start-btn" disabled on:click={startServer}
+      >Start Server</button
+    >
+    <button class="stop-btn" id="stop-btn" disabled on:click={stopServer}
+      >Stop Server</button
+    >
   </div>
   <div class="console" bind:this={consoleDiv}>
-    {#each rxMessages as message}
-      <div class="message">{message}</div>
+    {#each messages as msg}
+      <Message message={msg} />
     {/each}
   </div>
-     
 </main>
 
 <style>
-
   .input-box .btn {
     width: 60px;
     height: 30px;
@@ -111,7 +132,7 @@
     border-radius: 3px;
   }
 
-  .start-btn:hover{
+  .start-btn:hover {
     background-color: #6687a3;
   }
 
@@ -125,25 +146,21 @@
     border-radius: 3px;
   }
 
-  .stop-btn:hover{
+  .stop-btn:hover {
     background-color: #c15c5c;
   }
 
   .console {
+    display: flexbox;
+    height: 400px;
     background: #151415;
     border-radius: 10px;
     color: #fff5e9;
     font-family: "Courier New", monospace;
     padding: 10px 10px;
-    height: 400px;
     margin: 30px 10px 10px 10px;
     overflow-y: auto;
     border: 2px solid #fff5e9;
     text-align: left;
   }
-
-  .message {
-    margin: 2px 0;
-  }
-
 </style>
