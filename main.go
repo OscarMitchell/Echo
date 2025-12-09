@@ -8,7 +8,9 @@ import (
 	"github.com/wailsapp/wails/v2"
 	"github.com/wailsapp/wails/v2/pkg/options"
 	"github.com/wailsapp/wails/v2/pkg/options/assetserver"
+	"github.com/wailsapp/wails/v2/pkg/options/windows"
 	"github.com/wailsapp/wails/v2/pkg/runtime"
+	rt "github.com/wailsapp/wails/v2/pkg/runtime"
 )
 
 //go:embed all:frontend/dist
@@ -20,9 +22,15 @@ func main() {
 
 	// Create application with options
 	err := wails.Run(&options.App{
-		Title:  "Echo",
-		Width:  850,
-		Height: 575,
+		Title:     "Echo",
+		Width:     850,
+		Height:    575,
+		MinWidth:  850,
+		MinHeight: 575,
+		Windows: &windows.Options{
+			IsZoomControlEnabled: false,
+			DisablePinchZoom:     true,
+		},
 		AssetServer: &assetserver.Options{
 			Assets: assets,
 		},
@@ -33,7 +41,7 @@ func main() {
 		OnBeforeClose: func(ctx context.Context) (prevent bool) {
 			if serverHandler.IsUp() {
 				dialog, err := runtime.MessageDialog(ctx, runtime.MessageDialogOptions{
-					Type:    runtime.QuestionDialog,
+					Type:    rt.QuestionDialog,
 					Title:   "Quit?",
 					Message: "The Server is still running.\nAre you sure you want to quit?",
 				})
