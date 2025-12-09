@@ -5,7 +5,7 @@ import (
 	"context"
 	"time"
 
-	"github.com/wailsapp/wails/v2/pkg/runtime"
+	rt "github.com/wailsapp/wails/v2/pkg/runtime"
 )
 
 type ConsoleMessage struct {
@@ -15,8 +15,8 @@ type ConsoleMessage struct {
 	Sender  string `json:"sender"`
 }
 
-func newConsoleMessage(msg string, sender string) *ConsoleMessage {
-	return &ConsoleMessage{
+func makeConsoleMessage(msg string, sender string) ConsoleMessage {
+	return ConsoleMessage{
 		Content: msg,
 		RxTime:  time.Now().Format("15:04:05.000"),
 		Size:    len(msg),
@@ -24,7 +24,7 @@ func newConsoleMessage(msg string, sender string) *ConsoleMessage {
 	}
 }
 
-func WriteToTcpConsole(ctx context.Context, msg, sender string) {
-	cmsg := newConsoleMessage(msg, sender)
-	runtime.EventsEmit(ctx, "console-message", cmsg)
+func PresentMessage(ctx context.Context, msg, sender string) {
+	cmsg := makeConsoleMessage(msg, sender)
+	rt.EventsEmit(ctx, "console-message", cmsg)
 }

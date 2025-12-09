@@ -88,6 +88,12 @@
 </main>
 
 <style>
+  main {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+  }
+
   .input-box .btn {
     width: 60px;
     height: 30px;
@@ -151,8 +157,10 @@
   }
 
   .console {
-    display: flexbox;
-    height: 400px;
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    overflow: auto;
     background: #151415;
     border-radius: 10px;
     color: #fff5e9;

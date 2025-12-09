@@ -6,26 +6,19 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"log"
 	"net"
 	"sync"
-	"time"
 
 	"github.com/OscarMitchell/echo/backend/src/bridge"
 	"github.com/OscarMitchell/echo/backend/src/lib"
-	"github.com/wailsapp/wails/v2/pkg/runtime"
-)
-
-const (
-	FIFTY_MS       = time.Millisecond * 50
-	ONE_HUNDRED_MS = time.Millisecond * 100
+	rt "github.com/wailsapp/wails/v2/pkg/runtime"
 )
 
 type Server struct {
-	ctx            context.Context
-	server         net.Listener
-	connections    *lib.Set[net.Conn]
-	connectionsMtx sync.Mutex
+	ctx         context.Context
+	server      net.Listener
+	connections *lib.Set[net.Conn]
+	mtx         sync.Mutex
 }
 
 func NewServer(ctx context.Context, port string) (*Server, error) {
@@ -45,18 +38,20 @@ func (s *Server) Run() {
 	for {
 		conn, err := s.server.Accept()
 		if errors.Is(err, net.ErrClosed) {
-			log.Println("Server closed")
+			rt.LogInfo(s.ctx, "Server closed")
 			break
 		}
+
+		// TODO: Add a debouncer instead of just killing the server when
+		// encountering error spam. We can continue to attempt to keep alive the
+		// server regardless of error state, it doesn't really effect us.
 		if err != nil {
-			log.Printf("!!! Error when attempting to accept incoming connection to server: %v", err)
+			rt.LogErrorf(s.ctx, "Error when attempting to accept incoming connection to server: %v", err)
 			errCount++
 			if errCount > 50 {
-				log.Println("!!!!! Too many errors closing socket")
+				rt.LogError(s.ctx, "Too many errors - closing server")
 				s.Shutdown()
 			}
-
-			time.Sleep(ONE_HUNDRED_MS)
 			continue
 		}
 		errCount = 0
@@ -66,23 +61,23 @@ func (s *Server) Run() {
 }
 
 func (s *Server) Shutdown() {
-	log.Println("Shutdown triggered, closing connections and server")
-	s.connectionsMtx.Lock()
+	rt.LogInfo(s.ctx, "Shutdown triggered, closing connections and server")
+	s.mtx.Lock()
 	for conn := range s.connections.All() {
 		_ = conn.Close()
 	}
-	s.connectionsMtx.Unlock()
+	s.mtx.Unlock()
 	_ = s.server.Close()
 }
 
 func (s *Server) handleIncomingConnection(conn net.Conn) {
 	newConnMsg := fmt.Sprintln("New connection from:", conn.RemoteAddr().String())
-	runtime.LogInfo(s.ctx, newConnMsg)
+	rt.LogInfo(s.ctx, newConnMsg)
 	// bridge.WriteToTcpConsole(s.ctx, newConnMsg) // TODO: Convert to alert when implemented
 
-	s.connectionsMtx.Lock()
+	s.mtx.Lock()
 	s.connections.Add(conn)
-	s.connectionsMtx.Unlock()
+	s.mtx.Unlock()
 
 	buffer := bufio.NewReader(conn)
 	for {
@@ -92,20 +87,20 @@ func (s *Server) handleIncomingConnection(conn net.Conn) {
 			break
 		}
 		if errors.Is(err, net.ErrClosed) {
-			log.Printf("Connection with %s closed", conn.RemoteAddr().String())
+			rt.LogInfof(s.ctx, "Connection with %s closed", conn.RemoteAddr().String())
 			break
 		}
 		if err != nil {
-			log.Printf("!!!!! Failed to read from the socket: %v", err)
+			rt.LogErrorf(s.ctx, "Failed to read from the socket: %v", err)
 		}
-		bridge.WriteToTcpConsole(s.ctx, msg, conn.RemoteAddr().String())
+		bridge.PresentMessage(s.ctx, msg, conn.RemoteAddr().String())
 	}
 }
 
 func (s *Server) handleDisconnect(conn net.Conn) {
-	runtime.LogInfof(s.ctx, "Connection closed by client: %s", conn.RemoteAddr().String())
-	s.connectionsMtx.Lock()
+	rt.LogInfof(s.ctx, "Connection closed by client: %s", conn.RemoteAddr().String())
+	s.mtx.Lock()
 	_ = conn.Close()
 	s.connections.Remove(conn)
-	s.connectionsMtx.Unlock()
+	s.mtx.Unlock()
 }

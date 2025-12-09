@@ -8,7 +8,7 @@
     !define INFO_PROJECTNAME "Echo"
 !endif
 !ifndef INFO_COMPANYNAME
-    !define INFO_COMPANYNAME "Echo"
+    !define INFO_COMPANYNAME "Oscar Mitchell"
 !endif
 !ifndef INFO_PRODUCTNAME
     !define INFO_PRODUCTNAME "Echo"
@@ -17,7 +17,7 @@
     !define INFO_PRODUCTVERSION "1.0.0"
 !endif
 !ifndef INFO_COPYRIGHT
-    !define INFO_COPYRIGHT "Copyright........."
+    !define INFO_COPYRIGHT "Copyright Oscar Mitchell 2025-2026"
 !endif
 !ifndef PRODUCT_EXECUTABLE
     !define PRODUCT_EXECUTABLE "${INFO_PROJECTNAME}.exe"
