@@ -34,6 +34,7 @@ func (h *ServerHandler) OnShutdown(ctx context.Context) {
 // Logic Code
 // **********
 
+// Public for reflection to frontend
 func (h *ServerHandler) StartServer() error {
 	if h.port == "" {
 		errMsg := "No port has been set, cannot start server without a port"
@@ -53,6 +54,7 @@ func (h *ServerHandler) StartServer() error {
 	return nil
 }
 
+// Public for reflection to frontend
 func (h *ServerHandler) SetPort(port int) error {
 	if h.server != nil {
 		runtime.LogWarning(h.ctx, "Tried to change port on running server")
@@ -63,6 +65,7 @@ func (h *ServerHandler) SetPort(port int) error {
 	return nil
 }
 
+// Public for reflection to frontend
 func (h *ServerHandler) StopServer() {
 	if h.server == nil {
 		runtime.LogWarning(h.ctx, "Attempt to stop the server but no server was runnning")
